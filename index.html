@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#185FA5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Su Arıtma">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Su Arıtma — Müşteri Takip</title>
+<style>
+:root{
+  --bg:#ffffff;--bg2:#f5f5f5;--bg3:#eeeeee;
+  --text:#1a1a1a;--text2:#666;--text3:#999;
+  --border:#e0e0e0;--border2:#ccc;
+  --blue:#185FA5;--blue-bg:#E6F1FB;--blue-text:#0C447C;
+  --green:#3B6D11;--green-bg:#EAF3DE;--green-text:#27500A;
+  --amber:#BA7517;--amber-bg:#FAEEDA;--amber-text:#633806;
+  --red:#A32D2D;--red-bg:#FCEBEB;--red-text:#791F1F;
+  --purple-bg:#EEEDFE;--purple-text:#3C3489;
+  --teal-bg:#E1F5EE;--teal-text:#085041;
+  --coral-bg:#FAECE7;--coral-text:#712B13;
+  --radius:8px;--radius-lg:12px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1c1c1e;--bg2:#2c2c2e;--bg3:#3a3a3c;
+    --text:#f2f2f7;--text2:#aeaeb2;--text3:#636366;
+    --border:#38383a;--border2:#48484a;
+    --blue-bg:#0c2d4a;--blue-text:#85B7EB;
+    --green-bg:#1a2e0a;--green-text:#97C459;
+    --amber-bg:#2e1f00;--amber-text:#EF9F27;
+    --red-bg:#2e0a0a;--red-text:#F09595;
+    --purple-bg:#1e1a3a;--purple-text:#AFA9EC;
+    --teal-bg:#0a1e14;--teal-text:#5DCAA5;
+    --coral-bg:#2e1008;--coral-text:#F0997B;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;overscroll-behavior:none}
+input,select,textarea,button{font-family:inherit;font-size:16px;color:var(--text);background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius);padding:10px 12px;outline:none;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--blue)}
+button{width:auto;background:var(--bg2);border-color:var(--border2);cursor:pointer;padding:9px 14px;transition:opacity .15s}
+button:active{opacity:.7}
+textarea{min-height:70px;resize:vertical}
+
+/* Layout */
+.app{max-width:480px;margin:0 auto;padding:0 0 80px}
+.topbar{position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+.topbar h1{font-size:17px;font-weight:600}
+.topbar-btns{display:flex;gap:8px}
+.top-btn{font-size:13px;padding:7px 12px;border-radius:var(--radius)}
+.top-btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px 16px}
+.stat{background:var(--bg2);border-radius:var(--radius);padding:10px 8px;text-align:center}
+.stat-lbl{font-size:11px;color:var(--text2);margin-bottom:3px}
+.stat-num{font-size:20px;font-weight:600}
+.num-green{color:var(--green)}.num-red{color:var(--red)}.num-amber{color:var(--amber)}.num-blue{color:var(--blue)}
+
+/* Tabs */
+.tabs{display:flex;overflow-x:auto;border-bottom:1px solid var(--border);padding:0 16px;gap:0;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex-shrink:0;padding:10px 14px;font-size:13px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);margin-bottom:-1px;border-radius:0}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:500}
+
+/* Filters */
+.filter-row{display:flex;gap:8px;padding:10px 16px;background:var(--bg)}
+.filter-row input{flex:1;font-size:14px;padding:9px 12px}
+.filter-row select{flex:0 0 auto;font-size:13px;padding:9px 8px;min-width:0}
+
+/* Lists */
+.view{padding:0 16px}
+.list{display:flex;flex-direction:column;gap:8px;padding-top:8px}
+
+/* Cards */
+.card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px}
+.card.urgent{border-left:3px solid var(--red);border-radius:0 var(--radius-lg) var(--radius-lg) 0}
+.card.warn{border-left:3px solid var(--amber);border-radius:0 var(--radius-lg) var(--radius-lg) 0}
+.card-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0}
+.av0{background:var(--blue-bg);color:var(--blue-text)}.av1{background:var(--teal-bg);color:var(--teal-text)}
+.av2{background:var(--purple-bg);color:var(--purple-text)}.av3{background:var(--amber-bg);color:var(--amber-text)}.av4{background:var(--coral-bg);color:var(--coral-text)}
+.pav{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;flex-shrink:0}
+.pav0{background:var(--purple-bg);color:var(--purple-text)}.pav1{background:var(--teal-bg);color:var(--teal-text)}
+.pav2{background:var(--amber-bg);color:var(--amber-text)}.pav3{background:var(--coral-bg);color:var(--coral-text)}.pav4{background:var(--blue-bg);color:var(--blue-text)}
+.cname{font-size:15px;font-weight:600}
+.cadr{font-size:12px;color:var(--text2);margin-top:1px}
+.badges{display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+.badge{font-size:11px;padding:3px 8px;border-radius:20px;font-weight:500;white-space:nowrap}
+.b-ok{background:var(--green-bg);color:var(--green-text)}.b-warn{background:var(--amber-bg);color:var(--amber-text)}
+.b-due{background:var(--red-bg);color:var(--red-text)}.b-new{background:var(--blue-bg);color:var(--blue-text)}
+.b-paid{background:var(--green-bg);color:var(--green-text)}.b-partial{background:var(--amber-bg);color:var(--amber-text)}.b-unpaid{background:var(--red-bg);color:var(--red-text)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;margin-bottom:8px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px 10px;margin-bottom:8px}
+.ir{display:flex;flex-direction:column;gap:1px}
+.il{font-size:11px;color:var(--text2)}
+.iv{font-size:13px;font-weight:500}
+.personel-row{display:flex;align-items:center;gap:7px;padding:6px 8px;background:var(--bg2);border-radius:var(--radius);margin-bottom:8px}
+.personel-name{font-size:12px;font-weight:500}
+.personel-role{font-size:11px;color:var(--text2)}
+.note-box{font-size:12px;color:var(--text2);padding:6px 8px;background:var(--bg2);border-radius:var(--radius);margin-bottom:8px}
+.taksit-info{font-size:12px;color:var(--text2);margin-bottom:5px}
+.taksit-bar{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:4px}
+.tdot{width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;border:1px solid transparent}
+.tdot.paid{background:var(--green-bg);color:var(--green-text);border-color:#C0DD97}
+.tdot.due{background:var(--red-bg);color:var(--red-text);border-color:#F7C1C1}
+.prog{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:8px}
+.prog-bar{height:100%;border-radius:3px;background:#639922;transition:width .3s}
+.divider{border:none;border-top:1px solid var(--border);margin:10px 0}
+.card-btns{display:flex;gap:6px;flex-wrap:wrap}
+.card-btns button{font-size:12px;padding:7px 10px;flex:1}
+.btn-blue{background:var(--blue-bg);color:var(--blue-text);border-color:var(--blue-text)}
+.btn-green{background:var(--green-bg);color:var(--green-text);border-color:var(--green-text)}
+.btn-amber{background:var(--amber-bg);color:var(--amber-text);border-color:var(--amber-text)}
+.servis-list{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+.servis-item{display:flex;justify-content:space-between;font-size:12px;padding:6px 8px;background:var(--bg2);border-radius:var(--radius)}
+.region-hdr{font-size:13px;font-weight:600;color:var(--text2);padding:10px 0 6px;border-bottom:1px solid var(--border);margin-bottom:8px}
+.section-hdr{font-size:13px;font-weight:600;color:var(--text2);padding:8px 0 4px}
+.p-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;margin-bottom:10px}
+.p-stats{margin-left:auto;text-align:right}
+.p-num{font-size:18px;font-weight:600;color:var(--blue)}
+.p-lbl{font-size:11px;color:var(--text2)}
+.sms-box{background:var(--bg2);border-radius:var(--radius);padding:10px;font-size:13px;line-height:1.6;margin-top:8px}
+.odeme-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
+
+/* Bottom nav */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--border);display:flex;z-index:10;padding-bottom:env(safe-area-inset-bottom)}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;background:none;border:none;font-size:10px;color:var(--text2);border-radius:0}
+.nav-btn.active{color:var(--blue)}
+.nav-icon{width:22px;height:22px;display:flex;align-items:center;justify-content:center}
+.nav-icon svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* Modal */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;display:flex;align-items:flex-end;justify-content:center}
+.modal-backdrop.hidden{display:none}
+.modal-sheet{background:var(--bg);border-radius:20px 20px 0 0;padding:16px;width:100%;max-width:480px;max-height:90dvh;overflow-y:auto;padding-bottom:calc(16px + env(safe-area-inset-bottom))}
+.modal-handle{width:40px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 16px}
+.modal-sheet h3{font-size:17px;font-weight:600;margin-bottom:14px}
+.section-label{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+.fg{margin-bottom:10px}
+.fg label{display:block;font-size:13px;color:var(--text2);margin-bottom:4px;font-weight:500}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.taksit-preview{font-size:18px;font-weight:600;color:var(--blue);padding:8px 0}
+.modal-btns{display:flex;gap:8px;margin-top:14px}
+.modal-btns button{flex:1;padding:12px;font-size:15px;border-radius:var(--radius)}
+.btn-save{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600}
+.taksit-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.taksit-toggle{padding:10px 6px;font-size:12px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg2);color:var(--text);cursor:pointer;text-align:center;line-height:1.5}
+.taksit-toggle.paid{background:var(--green-bg);color:var(--green-text);border-color:#C0DD97}
+
+/* Export */
+.export-wrap{padding-top:8px}
+.ftags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.ftag{font-size:12px;padding:5px 10px;border-radius:20px;background:var(--bg2);border:1px solid var(--border2);color:var(--text2);cursor:pointer;white-space:nowrap}
+.ftag.on{background:var(--blue-bg);border-color:var(--blue);color:var(--blue-text)}
+.col-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px}
+.col-item{display:flex;align-items:center;gap:7px;font-size:13px;padding:7px 8px;border-radius:var(--radius);background:var(--bg2);cursor:pointer}
+.col-item input{width:16px;height:16px;cursor:pointer;flex-shrink:0;accent-color:var(--blue)}
+.preview-wrap{overflow-x:auto;margin-bottom:12px;border:1px solid var(--border);border-radius:var(--radius)}
+.preview-table{width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap}
+.preview-table th{background:var(--bg2);color:var(--text2);font-weight:600;padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)}
+.preview-table td{padding:6px 10px;border-bottom:1px solid var(--border)}
+.preview-table tr:last-child td{border-bottom:none}
+.preview-table tr:nth-child(even) td{background:var(--bg2)}
+.export-btns{display:flex;gap:8px}
+.export-btns button{flex:1;padding:12px;font-size:14px;font-weight:600}
+.btn-xlsx{background:var(--green-bg);color:var(--green-text);border-color:var(--green-text)}
+.btn-csv{background:var(--blue-bg);color:var(--blue-text);border-color:var(--blue-text)}
+.empty{font-size:14px;color:var(--text2);text-align:center;padding:3rem 0}
+.install-banner{background:var(--blue-bg);color:var(--blue-text);padding:10px 16px;font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.install-banner button{background:var(--blue);color:#fff;border:none;font-size:12px;padding:6px 12px;border-radius:var(--radius);width:auto}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div id="install-banner" class="install-banner hidden">
+    <span>Uygulamayı telefona yükle</span>
+    <button onclick="installApp()">Yükle</button>
+  </div>
+
+  <div class="topbar">
+    <h1>Su Arıtma Takip</h1>
+    <div class="topbar-btns">
+      <button class="top-btn" onclick="setTab('export')">Excel</button>
+      <button class="top-btn primary" onclick="openModal()">+ Yeni</button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-lbl">Toplam</div><div class="stat-num" id="s-total">0</div></div>
+    <div class="stat"><div class="stat-lbl">Filtre geçti</div><div class="stat-num num-red" id="s-due">0</div></div>
+    <div class="stat"><div class="stat-lbl">Tahsilat</div><div class="stat-num num-amber" id="s-unpaid">0</div></div>
+    <div class="stat"><div class="stat-lbl">Ciro</div><div class="stat-num num-blue" id="s-rev">0</div></div>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" onclick="setTab('list')">Müşteriler</button>
+    <button class="tab" onclick="setTab('region')">Bölge</button>
+    <button class="tab" onclick="setTab('personel')">Personel</button>
+    <button class="tab" onclick="setTab('sms')">SMS</button>
+    <button class="tab" onclick="setTab('odeme')">Ödemeler</button>
+    <button class="tab" onclick="setTab('export')">Excel</button>
+  </div>
+
+  <div id="filter-row" class="filter-row">
+    <input type="search" id="q" placeholder="İsim veya adres..." oninput="render()">
+    <select id="filt" onchange="render()" style="width:auto">
+      <option value="">Tümü</option>
+      <option value="ok">Filtre tamam</option>
+      <option value="warn">Yakında</option>
+      <option value="due">Geçti</option>
+    </select>
+    <select id="pfilt" onchange="render()" style="width:auto">
+      <option value="">Personel</option>
+    </select>
+  </div>
+
+  <div class="view">
+    <div id="view-list" class="list"></div>
+    <div id="view-region" class="hidden"></div>
+    <div id="view-personel" class="hidden"></div>
+    <div id="view-sms" class="hidden"></div>
+    <div id="view-odeme" class="hidden"></div>
+    <div id="view-export" class="export-wrap hidden"></div>
+  </div>
+</div>
+
+<!-- Müşteri Modal -->
+<div id="modal-wrap" class="modal-backdrop hidden" onclick="backdropClose(event,'modal-wrap')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <h3 id="m-title">Yeni müşteri ekle</h3>
+    <div class="section-label">Müşteri bilgileri</div>
+    <div class="row2">
+      <div class="fg"><label>Ad soyad</label><input id="m-name" type="text" placeholder="Ahmet Yılmaz"></div>
+      <div class="fg"><label>Telefon</label><input id="m-phone" type="tel" placeholder="0532 000 00 00"></div>
+    </div>
+    <div class="row2">
+      <div class="fg"><label>Şehir</label><input id="m-city" type="text" placeholder="İzmir"></div>
+      <div class="fg"><label>İlçe / Adres</label><input id="m-addr" type="text" placeholder="Bornova"></div>
+    </div>
+    <div class="section-label">Satış bilgileri</div>
+    <div class="row2">
+      <div class="fg"><label>Cihaz modeli</label><input id="m-model" type="text" placeholder="7 aşamalı RO"></div>
+      <div class="fg"><label>Satış tutarı (₺)</label><input id="m-price" type="number" inputmode="numeric" placeholder="0" oninput="updatePreview()"></div>
+    </div>
+    <div class="row2">
+      <div class="fg"><label>Ödeme tipi</label>
+        <select id="m-paytype" onchange="toggleTaksit()">
+          <option value="Peşin">Peşin</option>
+          <option value="Taksitli">Taksitli</option>
+        </select>
+      </div>
+      <div class="fg" id="taksit-wrap" style="display:none"><label>Taksit sayısı</label>
+        <select id="m-taksit" onchange="updatePreview()">
+          <option>2</option><option>3</option><option>4</option><option>5</option><option>6</option>
+          <option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option>
+        </select>
+      </div>
+    </div>
+    <div id="preview-wrap" style="display:none" class="fg">
+      <label>Aylık taksit tutarı</label>
+      <div class="taksit-preview" id="taksit-preview">—</div>
+    </div>
+    <div class="section-label">Personel</div>
+    <div class="fg"><label>Satış personeli (mevcut)</label>
+      <select id="m-personel"><option value="">Seçiniz veya yeni girin</option></select>
+    </div>
+    <div class="row2">
+      <div class="fg"><label>Yeni personel adı</label><input id="m-personel-new" type="text" placeholder="Ad Soyad"></div>
+      <div class="fg"><label>Görevi</label><input id="m-personel-role" type="text" placeholder="Satış Temsilcisi"></div>
+    </div>
+    <div class="section-label">Cihaz & Notlar</div>
+    <div class="row2">
+      <div class="fg"><label>Kurulum tarihi</label><input id="m-install" type="date"></div>
+      <div class="fg"><label>Filtre değişim</label><input id="m-filter" type="date"></div>
+    </div>
+    <div class="fg"><label>Notlar</label><textarea id="m-notes" placeholder="Özel notlar..."></textarea></div>
+    <div class="modal-btns">
+      <button onclick="closeModal('modal-wrap')">İptal</button>
+      <button class="btn-save" onclick="saveCustomer()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- Taksit Modal -->
+<div id="taksit-modal" class="modal-backdrop hidden" onclick="backdropClose(event,'taksit-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <h3 id="tm-title">Taksit takibi</h3>
+    <div id="tm-info" style="font-size:13px;color:var(--text2);margin-bottom:10px"></div>
+    <div id="tm-grid" class="taksit-grid"></div>
+    <div style="font-size:12px;color:var(--text2);margin-top:6px">Taksite tıklayarak ödeme durumunu değiştir.</div>
+    <div class="modal-btns"><button onclick="closeModal('taksit-modal')">Kapat</button></div>
+  </div>
+</div>
+
+<!-- Servis Modal -->
+<div id="servis-modal" class="modal-backdrop hidden" onclick="backdropClose(event,'servis-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <h3>Servis kaydı ekle</h3>
+    <div class="fg"><label>Tarih</label><input id="sv-date" type="date"></div>
+    <div class="fg"><label>Yapılan işlem</label><input id="sv-desc" type="text" placeholder="Filtre değişimi..."></div>
+    <div class="fg"><label>Ücret (₺)</label><input id="sv-fee" type="number" inputmode="numeric" placeholder="0"></div>
+    <div class="modal-btns">
+      <button onclick="closeModal('servis-modal')">İptal</button>
+      <button class="btn-save" onclick="saveServis()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+// ---- Data ----
+let activeTab='list';
+let editIdx=-1, servisIdx=-1, taksitIdx=-1, exportFilter='all';
+let showHistorySet=new Set();
+
+const ALL_COLS=[
+  {key:'name',label:'Ad Soyad'},{key:'phone',label:'Telefon'},{key:'city',label:'Şehir'},
+  {key:'addr',label:'Adres'},{key:'model',label:'Cihaz'},{key:'price',label:'Satış (₺)'},
+  {key:'paytype',label:'Ödeme Tipi'},{key:'taksitsayisi',label:'Taksit Sayısı'},
+  {key:'taksittutar',label:'Aylık Taksit (₺)'},{key:'odenen',label:'Ödenen (₺)'},
+  {key:'kalan',label:'Kalan (₺)'},{key:'install',label:'Kurulum'},
+  {key:'filter',label:'Filtre Değişim'},{key:'filtredurum',label:'Filtre Durumu'},
+  {key:'personelAdi',label:'Personel'},{key:'personelGorev',label:'Görevi'},
+  {key:'serviscount',label:'Servis Sayısı'},{key:'notes',label:'Notlar'},
+];
+let selectedCols=new Set(ALL_COLS.map(c=>c.key));
+
+function loadData(){
+  try{return JSON.parse(localStorage.getItem('customers')||'null');}catch{return null;}
+}
+function saveData(){
+  try{localStorage.setItem('customers',JSON.stringify(customers));}catch(e){}
+}
+
+let customers=loadData()||[
+  {name:'Mehmet Yılmaz',phone:'0532 111 22 33',city:'İzmir',addr:'Karşıyaka',model:'7 aşamalı RO',price:4500,paytype:'Peşin',taksit:1,taksitPaid:[true],install:'2025-09-10',filter:'2026-03-05',notes:'Zemin kat.',personelAdi:'Ahmet Koç',personelGorev:'Saha Satış Temsilcisi',servis:[{date:'2025-12-05',desc:'Filtre değişimi',fee:350}]},
+  {name:'Fatma Şahin',phone:'0541 222 33 44',city:'İzmir',addr:'Bornova',model:'5 aşamalı RO',price:3600,paytype:'Taksitli',taksit:6,taksitPaid:[true,true,true,false,false,false],install:'2025-11-20',filter:'2026-05-20',notes:'6 taksit.',personelAdi:'Selin Demir',personelGorev:'Bölge Satış Müdürü',servis:[]},
+  {name:'Ali Çetin',phone:'0505 333 44 55',city:'İzmir',addr:'Konak',model:'9 aşamalı RO',price:6000,paytype:'Taksitli',taksit:12,taksitPaid:[true,true,true,true,false,false,false,false,false,false,false,false],install:'2026-01-15',filter:'2026-07-15',notes:'',personelAdi:'Ahmet Koç',personelGorev:'Saha Satış Temsilcisi',servis:[]},
+  {name:'Emine Kaya',phone:'0544 444 55 66',city:'İzmir',addr:'Buca',model:'5 aşamalı RO',price:3000,paytype:'Taksitli',taksit:3,taksitPaid:[false,false,false],install:'2026-02-01',filter:'2026-08-01',notes:'',personelAdi:'Selin Demir',personelGorev:'Bölge Satış Müdürü',servis:[]},
+  {name:'Hasan Arslan',phone:'0533 555 66 77',city:'İzmir',addr:'Gaziemir',model:'7 aşamalı RO',price:4500,paytype:'Peşin',taksit:1,taksitPaid:[true],install:'2025-06-10',filter:'2025-12-10',notes:'',personelAdi:'Emre Yıldız',personelGorev:'Satış Temsilcisi',servis:[{date:'2025-12-12',desc:'Filtre değişimi',fee:350}]},
+  {name:'Zeynep Demir',phone:'0512 666 77 88',city:'Manisa',addr:'Şehzadeler',model:'7 aşamalı RO',price:4200,paytype:'Taksitli',taksit:6,taksitPaid:[true,true,false,false,false,false],install:'2026-01-05',filter:'2026-07-05',notes:'',personelAdi:'Emre Yıldız',personelGorev:'Satış Temsilcisi',servis:[]},
+  {name:'Mustafa Kara',phone:'0531 777 88 99',city:'Manisa',addr:'Yunusemre',model:'5 aşamalı RO',price:3000,paytype:'Peşin',taksit:1,taksitPaid:[true],install:'2025-10-15',filter:'2026-03-10',notes:'',personelAdi:'Ahmet Koç',personelGorev:'Saha Satış Temsilcisi',servis:[{date:'2026-01-15',desc:'Filtre değişimi',fee:350}]},
+];
+
+// ---- Helpers ----
+const ini=n=>n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+const avCls=i=>'av'+(i%5);
+const pavCls=i=>'pav'+(i%5);
+const fmtD=d=>{if(!d)return'-';const p=d.split('-');return p[2]+'.'+p[1]+'.'+p[0]};
+const fmtM=n=>Math.round(n||0).toLocaleString('tr-TR')+'₺';
+const paidCnt=c=>(c.taksitPaid||[]).filter(Boolean).length;
+const paidAmt=c=>{if(c.paytype==='Peşin')return c.taksitPaid&&c.taksitPaid[0]?c.price:0;return Math.round(paidCnt(c)*(c.taksit>0?c.price/c.taksit:0));};
+const remAmt=c=>Math.max(0,c.price-paidAmt(c));
+const taksitPer=c=>c.paytype==='Peşin'?c.price:Math.round(c.price/c.taksit);
+
+function fltStatus(c){
+  if(!c.filter)return'new';
+  const t=new Date();t.setHours(0,0,0,0);
+  const d=Math.round((new Date(c.filter)-t)/864e5);
+  return d<0?'due':d<=30?'warn':'ok';
+}
+function fltLabel(c){const s=fltStatus(c);return s==='due'?['b-due','Filtre geçti']:s==='warn'?['b-warn','Filtre yakın']:s==='ok'?['b-ok','Filtre tamam']:['b-new','Yeni'];}
+function payBadge(c){const pc=paidCnt(c),t=c.taksit||1;if(pc>=t)return['b-paid','Ödendi'];if(pc>0)return['b-partial',pc+'/'+t+' taksit'];return['b-unpaid','Ödenmedi'];}
+function getPersonelList(){const m={};customers.forEach(c=>{if(c.personelAdi)m[c.personelAdi]=c.personelGorev||'';});return Object.entries(m).map(([n,r])=>({name:n,role:r}));}
+function getPersonelIdx(name){return getPersonelList().findIndex(p=>p.name===name);}
+
+function refreshPersonelSelects(){
+  const list=getPersonelList();
+  const sel=document.getElementById('m-personel');
+  const pfilt=document.getElementById('pfilt');
+  const pv=sel.value,fv=pfilt.value;
+  sel.innerHTML='<option value="">Seçiniz veya yeni girin</option>'+list.map(p=>`<option value="${p.name}">${p.name} — ${p.role}</option>`).join('');
+  pfilt.innerHTML='<option value="">Personel</option>'+list.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');
+  sel.value=pv;pfilt.value=fv;
+}
+
+// ---- Render helpers ----
+function taksitDotsHTML(c){
+  if(c.paytype==='Peşin'){
+    const ok=c.taksitPaid&&c.taksitPaid[0];
+    return`<div class="taksit-info">Peşin ödeme</div><div class="taksit-bar"><div class="tdot ${ok?'paid':'due'}">${ok?'✓':'!'}</div></div>`;
+  }
+  const per=taksitPer(c),pc=paidCnt(c),pct=Math.round(pc/c.taksit*100);
+  const dots=(c.taksitPaid||[]).map((ok,i)=>`<div class="tdot ${ok?'paid':'due'}">${i+1}</div>`).join('');
+  return`<div class="taksit-info">${c.taksit} taksit — aylık ${fmtM(per)} — ${pc}/${c.taksit} ödendi</div>
+  <div class="taksit-bar">${dots}</div>
+  <div class="prog"><div class="prog-bar" style="width:${pct}%"></div></div>`;
+}
+
+function personelRowHTML(c){
+  if(!c.personelAdi)return'';
+  const pi=getPersonelIdx(c.personelAdi);
+  return`<div class="personel-row">
+    <div class="pav ${pavCls(pi>=0?pi:0)}">${ini(c.personelAdi)}</div>
+    <div><div class="personel-name">${c.personelAdi}</div><div class="personel-role">${c.personelGorev||''}</div></div>
+    <span style="margin-left:auto;font-size:11px;color:var(--text3)">satış personeli</span>
+  </div>`;
+}
+
+function cardHTML(c,i,showHistory){
+  const fs=fltStatus(c),[bc,bl]=fltLabel(c),[pc,pl]=payBadge(c);
+  const cls=fs==='due'?'card urgent':fs==='warn'?'card warn':'card';
+  const rem=remAmt(c);
+  const servisHTML=showHistory&&c.servis&&c.servis.length?
+    `<div class="servis-list">${c.servis.map(s=>`<div class="servis-item"><span>${s.desc}</span><span style="color:var(--text2)">${fmtD(s.date)} — ${fmtM(s.fee)}</span></div>`).join('')}</div>`:'';
+  return`<div class="${cls}">
+    <div class="card-head">
+      <div class="av ${avCls(i)}">${ini(c.name)}</div>
+      <div style="flex:1;min-width:0"><div class="cname">${c.name}</div><div class="cadr">${c.city} — ${c.addr}</div></div>
+      <div class="badges"><span class="badge ${bc}">${bl}</span><span class="badge ${pc}">${pl}</span></div>
+    </div>
+    ${personelRowHTML(c)}
+    <div class="grid3">
+      <div class="ir"><span class="il">Cihaz</span><span class="iv">${c.model}</span></div>
+      <div class="ir"><span class="il">Satış</span><span class="iv">${fmtM(c.price)}</span></div>
+      <div class="ir"><span class="il">Kalan</span><span class="iv" style="color:${rem>0?'var(--red)':'var(--green)'}">${fmtM(rem)}</span></div>
+    </div>
+    ${taksitDotsHTML(c)}
+    <div class="grid2">
+      <div class="ir"><span class="il">Kurulum</span><span class="iv">${fmtD(c.install)}</span></div>
+      <div class="ir"><span class="il">Filtre değişim</span><span class="iv">${fmtD(c.filter)}</span></div>
+    </div>
+    ${c.notes?`<div class="note-box">${c.notes}</div>`:''}
+    ${servisHTML}
+    <div class="divider"></div>
+    <div class="card-btns">
+      <button onclick="editCustomer(${i})">Düzenle</button>
+      <button class="btn-blue" onclick="openTaksitModal(${i})">Taksit</button>
+      <button class="btn-amber" onclick="renewFilter(${i})">Filtre yenile</button>
+      <button class="btn-green" onclick="openServisModal(${i})">Servis</button>
+      <button onclick="toggleHistory(${i})">${showHistory?'Gizle':'Geçmiş'}</button>
+    </div>
+  </div>`;
+}
+
+// ---- Tab & Render ----
+function setTab(tab){
+  activeTab=tab;
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    const tabs=['list','region','personel','sms','odeme','export'];
+    t.classList.toggle('active',tabs[i]===tab);
+  });
+  document.getElementById('filter-row').style.display=tab==='list'?'flex':'none';
+  ['list','region','personel','sms','odeme','export'].forEach(t=>document.getElementById('view-'+t).classList.toggle('hidden',t!==tab));
+  render();
+}
+
+function renderStats(){
+  document.getElementById('s-total').textContent=customers.length;
+  document.getElementById('s-due').textContent=customers.filter(c=>fltStatus(c)==='due').length;
+  document.getElementById('s-unpaid').textContent=customers.filter(c=>remAmt(c)>0).length;
+  const rev=customers.reduce((a,c)=>a+paidAmt(c),0);
+  document.getElementById('s-rev').textContent=rev>=1000?Math.round(rev/1000)+'K':fmtM(rev).replace('₺','');
+}
+
+function toggleHistory(i){showHistorySet.has(i)?showHistorySet.delete(i):showHistorySet.add(i);render();}
+
+function render(){
+  renderStats();refreshPersonelSelects();
+  if(activeTab==='list'){
+    const q=document.getElementById('q').value.toLowerCase();
+    const filt=document.getElementById('filt').value;
+    const pfilt=document.getElementById('pfilt').value;
+    const filtered=customers.filter(c=>{
+      const match=(c.name+c.addr+c.city+(c.personelAdi||'')).toLowerCase().includes(q);
+      const fs=fltStatus(c);
+      const fm=!filt||(filt==='ok'&&fs==='ok')||(filt==='warn'&&fs==='warn')||(filt==='due'&&fs==='due');
+      return match&&fm&&(!pfilt||c.personelAdi===pfilt);
+    });
+    const el=document.getElementById('view-list');
+    el.innerHTML=filtered.length?filtered.map(c=>{const i=customers.indexOf(c);return cardHTML(c,i,showHistorySet.has(i));}).join(''):'<div class="empty">Müşteri bulunamadı.</div>';
+  }
+  else if(activeTab==='region'){
+    const regions={};
+    customers.forEach((c,i)=>{const r=c.city||'Diğer';if(!regions[r])regions[r]=[];regions[r].push({c,i});});
+    document.getElementById('view-region').innerHTML=Object.entries(regions).map(([r,list])=>
+      `<div class="region-hdr">${r} — ${list.length} müşteri</div>
+      <div class="list" style="margin-bottom:16px">${list.map(({c,i})=>cardHTML(c,i,showHistorySet.has(i))).join('')}</div>`
+    ).join('');
+  }
+  else if(activeTab==='personel'){
+    const plist=getPersonelList();
+    document.getElementById('view-personel').innerHTML=plist.map((p,pi)=>{
+      const pc=customers.filter(c=>c.personelAdi===p.name);
+      const tahsil=pc.reduce((a,c)=>a+paidAmt(c),0);
+      const filtreDue=pc.filter(c=>fltStatus(c)==='due').length;
+      return`<div class="p-card">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+          <div class="av ${avCls(pi)}" style="width:44px;height:44px;font-size:14px">${ini(p.name)}</div>
+          <div><div style="font-size:15px;font-weight:600">${p.name}</div><div style="font-size:12px;color:var(--text2)">${p.role}</div></div>
+          <div class="p-stats"><div class="p-num">${pc.length}</div><div class="p-lbl">müşteri</div></div>
+          <div class="p-stats" style="margin-left:8px"><div class="p-num" style="color:var(--green)">${fmtM(tahsil)}</div><div class="p-lbl">tahsilat</div></div>
+          ${filtreDue>0?`<div class="p-stats" style="margin-left:8px"><div class="p-num" style="color:var(--red)">${filtreDue}</div><div class="p-lbl">filtre geçti</div></div>`:''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          ${pc.map(c=>{
+            const i=customers.indexOf(c);const [bc,bl]=fltLabel(c);const [pcc,pl]=payBadge(c);
+            return`<div class="card" style="padding:10px 12px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="av ${avCls(i)}" style="width:32px;height:32px;font-size:11px">${ini(c.name)}</div>
+                <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">${c.name}</div><div style="font-size:11px;color:var(--text2)">${c.model} — ${fmtM(c.price)}</div></div>
+                <span class="badge ${bc}" style="font-size:10px">${bl}</span>
+                <span class="badge ${pcc}" style="font-size:10px">${pl}</span>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }).join('');
+  }
+  else if(activeTab==='sms'){
+    const due=customers.filter(c=>['due','warn'].includes(fltStatus(c)));
+    document.getElementById('view-sms').innerHTML=`<div style="font-size:13px;color:var(--text2);padding:8px 0 10px"><strong style="color:var(--text)">${due.length} müşteri</strong> için SMS taslakları:</div>
+    ${due.map(c=>{
+      const ri=customers.indexOf(c);const fs=fltStatus(c);
+      const msg=fs==='due'
+        ?`Sayın ${c.name.split(' ')[0]} Hanım/Bey, cihazınızın filtre değişim tarihi geçmiştir. Sağlıklı su için en kısa sürede servis randevusu almanızı öneririz.`
+        :`Sayın ${c.name.split(' ')[0]} Hanım/Bey, cihazınızın filtre değişim zamanı yaklaşmaktadır (${fmtD(c.filter)}). Randevu için bizi arayabilirsiniz.`;
+      return`<div class="card" style="margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <div class="av ${avCls(ri)}" style="width:32px;height:32px;font-size:11px">${ini(c.name)}</div>
+          <div><div style="font-size:13px;font-weight:600">${c.name}</div><div style="font-size:11px;color:var(--text2)">${c.phone}</div></div>
+          <span class="badge ${fs==='due'?'b-due':'b-warn'}" style="margin-left:auto">${fs==='due'?'Geçti':'Yakın'}</span>
+        </div>
+        <div class="sms-box">${msg}</div>
+        <button style="margin-top:8px;font-size:12px" onclick="navigator.clipboard&&navigator.clipboard.writeText('${msg.replace(/'/g,"\\'")}').then(()=>alert('Kopyalandı!'))">Kopyala</button>
+      </div>`;
+    }).join('')}`;
+  }
+  else if(activeTab==='odeme'){
+    const toplam=customers.reduce((a,c)=>a+c.price,0);
+    const odenen=customers.reduce((a,c)=>a+paidAmt(c),0);
+    const servisGelir=customers.reduce((a,c)=>a+(c.servis||[]).reduce((b,s)=>b+(s.fee||0),0),0);
+    document.getElementById('view-odeme').innerHTML=`
+      <div class="odeme-stats">
+        <div class="stat"><div class="stat-lbl">Toplam ciro</div><div class="stat-num num-blue">${fmtM(toplam)}</div></div>
+        <div class="stat"><div class="stat-lbl">Tahsil edilen</div><div class="stat-num num-green">${fmtM(odenen)}</div></div>
+        <div class="stat"><div class="stat-lbl">Bekleyen</div><div class="stat-num num-amber">${fmtM(toplam-odenen)}</div></div>
+        <div class="stat"><div class="stat-lbl">Servis geliri</div><div class="stat-num num-blue">${fmtM(servisGelir)}</div></div>
+      </div>
+      <div class="list">
+        ${customers.map((c,i)=>{
+          const [pcc,pl]=payBadge(c);const paid=paidAmt(c);const rem=remAmt(c);
+          const pct=c.price>0?Math.min(100,Math.round(paid/c.price*100)):0;
+          const pi=getPersonelIdx(c.personelAdi);
+          return`<div class="card">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+              <div class="av ${avCls(i)}" style="width:34px;height:34px;font-size:12px">${ini(c.name)}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:14px;font-weight:600">${c.name}</div>
+                <div style="font-size:12px;color:var(--text2)">${c.paytype==='Peşin'?'Peşin':c.taksit+' taksit — aylık '+fmtM(taksitPer(c))}</div>
+              </div>
+              <span class="badge ${pcc}">${pl}</span>
+            </div>
+            ${c.personelAdi?`<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+              <div class="pav ${pavCls(pi>=0?pi:0)}">${ini(c.personelAdi)}</div>
+              <span style="font-size:12px;color:var(--text2)">${c.personelAdi} — ${c.personelGorev||''}</span>
+            </div>`:''}
+            <div class="grid3">
+              <div class="ir"><span class="il">Satış</span><span class="iv">${fmtM(c.price)}</span></div>
+              <div class="ir"><span class="il">Ödenen</span><span class="iv">${fmtM(paid)}</span></div>
+              <div class="ir"><span class="il">Kalan</span><span class="iv" style="color:${rem>0?'var(--red)':'var(--green)'}">${fmtM(rem)}</span></div>
+            </div>
+            <div class="prog"><div class="prog-bar" style="width:${pct}%"></div></div>
+            <div style="font-size:11px;color:var(--text2);margin-top:3px">${pct}% ödendi</div>
+            <div class="divider"></div>
+            <button class="btn-blue" style="font-size:12px;padding:7px 12px" onclick="openTaksitModal(${i})">Taksit takibi</button>
+          </div>`;
+        }).join('')}
+      </div>`;
+  }
+  else if(activeTab==='export'){
+    renderExport();
+  }
+}
+
+// ---- Modal actions ----
+function backdropClose(e,id){if(e.target.id===id)closeModal(id);}
+function closeModal(id){document.getElementById(id).classList.add('hidden');}
+
+function openModal(clear=true){
+  if(clear){
+    editIdx=-1;
+    document.getElementById('m-title').textContent='Yeni müşteri ekle';
+    ['m-name','m-phone','m-city','m-addr','m-model','m-personel-new','m-personel-role','m-notes'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('m-price').value='';
+    document.getElementById('m-paytype').value='Peşin';
+    document.getElementById('m-taksit').value='6';
+    document.getElementById('m-install').value='';
+    document.getElementById('m-filter').value='';
+    document.getElementById('m-personel').value='';
+    toggleTaksit();
+  }
+  refreshPersonelSelects();
+  document.getElementById('modal-wrap').classList.remove('hidden');
+}
+
+function editCustomer(i){
+  editIdx=i;const c=customers[i];
+  document.getElementById('m-title').textContent='Müşteriyi düzenle';
+  document.getElementById('m-name').value=c.name;
+  document.getElementById('m-phone').value=c.phone;
+  document.getElementById('m-city').value=c.city||'';
+  document.getElementById('m-addr').value=c.addr;
+  document.getElementById('m-model').value=c.model;
+  document.getElementById('m-price').value=c.price;
+  document.getElementById('m-paytype').value=c.paytype;
+  document.getElementById('m-taksit').value=c.taksit||6;
+  document.getElementById('m-install').value=c.install||'';
+  document.getElementById('m-filter').value=c.filter||'';
+  document.getElementById('m-notes').value=c.notes||'';
+  document.getElementById('m-personel-new').value='';
+  document.getElementById('m-personel-role').value='';
+  toggleTaksit();
+  refreshPersonelSelects();
+  document.getElementById('m-personel').value=c.personelAdi||'';
+  openModal(false);
+}
+
+function toggleTaksit(){
+  const t=document.getElementById('m-paytype').value==='Taksitli';
+  document.getElementById('taksit-wrap').style.display=t?'block':'none';
+  document.getElementById('preview-wrap').style.display=t?'block':'none';
+  updatePreview();
+}
+function updatePreview(){
+  const price=parseFloat(document.getElementById('m-price').value)||0;
+  const n=parseInt(document.getElementById('m-taksit').value)||1;
+  const t=document.getElementById('m-paytype').value==='Taksitli';
+  document.getElementById('taksit-preview').textContent=t&&price>0?fmtM(Math.round(price/n)):'—';
+}
+
+function saveCustomer(){
+  const paytype=document.getElementById('m-paytype').value;
+  const taksit=paytype==='Peşin'?1:parseInt(document.getElementById('m-taksit').value)||1;
+  let taksitPaid;
+  if(editIdx>=0&&customers[editIdx].taksit===taksit&&customers[editIdx].paytype===paytype){
+    taksitPaid=customers[editIdx].taksitPaid;
+  } else {
+    taksitPaid=Array(taksit).fill(false);
+  }
+  let personelAdi=document.getElementById('m-personel').value;
+  const personelNew=document.getElementById('m-personel-new').value.trim();
+  const personelRoleInput=document.getElementById('m-personel-role').value.trim();
+  let personelGorev='';
+  if(personelNew){personelAdi=personelNew;personelGorev=personelRoleInput;}
+  else if(personelAdi){const f=getPersonelList().find(p=>p.name===personelAdi);personelGorev=personelRoleInput||f?.role||'';}
+  const c={
+    name:document.getElementById('m-name').value.trim()||'İsimsiz',
+    phone:document.getElementById('m-phone').value.trim()||'-',
+    city:document.getElementById('m-city').value.trim()||'Diğer',
+    addr:document.getElementById('m-addr').value.trim()||'-',
+    model:document.getElementById('m-model').value.trim()||'-',
+    price:parseFloat(document.getElementById('m-price').value)||0,
+    paytype,taksit,taksitPaid,
+    install:document.getElementById('m-install').value,
+    filter:document.getElementById('m-filter').value,
+    notes:document.getElementById('m-notes').value.trim(),
+    personelAdi,personelGorev,
+    servis:editIdx>=0?(customers[editIdx].servis||[]):[]
+  };
+  if(editIdx>=0)customers[editIdx]=c;else customers.unshift(c);
+  saveData();closeModal('modal-wrap');render();
+}
+
+function renewFilter(i){
+  const t=new Date();t.setMonth(t.getMonth()+6);
+  customers[i].filter=t.toISOString().split('T')[0];
+  saveData();render();
+}
+
+function openTaksitModal(i){
+  taksitIdx=i;const c=customers[i];
+  document.getElementById('tm-title').textContent=c.name+' — Taksit takibi';
+  const per=taksitPer(c);
+  document.getElementById('tm-info').textContent=c.paytype==='Peşin'?`Peşin satış — ${fmtM(c.price)}`:`${c.taksit} taksit — aylık ${fmtM(per)} — toplam ${fmtM(c.price)}`;
+  document.getElementById('tm-grid').innerHTML=(c.taksitPaid||[]).map((ok,idx)=>
+    `<div class="taksit-toggle ${ok?'paid':''}" onclick="toggleTaksit2(${idx})">${idx+1}. taksit<br><small>${fmtM(per)}</small><br><b>${ok?'✓ Ödendi':'Bekliyor'}</b></div>`
+  ).join('');
+  document.getElementById('taksit-modal').classList.remove('hidden');
+}
+function toggleTaksit2(idx){
+  customers[taksitIdx].taksitPaid[idx]=!customers[taksitIdx].taksitPaid[idx];
+  saveData();openTaksitModal(taksitIdx);render();
+}
+
+function openServisModal(i){
+  servisIdx=i;
+  document.getElementById('sv-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('sv-desc').value='';document.getElementById('sv-fee').value='';
+  document.getElementById('servis-modal').classList.remove('hidden');
+}
+function saveServis(){
+  const s={date:document.getElementById('sv-date').value,desc:document.getElementById('sv-desc').value.trim()||'Servis',fee:parseFloat(document.getElementById('sv-fee').value)||0};
+  if(!customers[servisIdx].servis)customers[servisIdx].servis=[];
+  customers[servisIdx].servis.unshift(s);showHistorySet.add(servisIdx);
+  saveData();closeModal('servis-modal');render();
+}
+
+// ---- Export ----
+function getCellVal(c,key){
+  if(key==='odenen')return paidAmt(c);if(key==='kalan')return remAmt(c);
+  if(key==='taksitsayisi')return c.paytype==='Peşin'?'-':c.taksit;
+  if(key==='taksittutar')return taksitPer(c);
+  if(key==='filtredurum'){const s=fltStatus(c);return s==='due'?'Filtre geçti':s==='warn'?'Filtre yakın':'Filtre tamam';}
+  if(key==='serviscount')return(c.servis||[]).length;
+  if(key==='install'||key==='filter')return fmtD(c[key]);
+  return c[key]??'';
+}
+function getExportRows(){
+  if(exportFilter==='due')return customers.filter(c=>fltStatus(c)==='due');
+  if(exportFilter==='warn')return customers.filter(c=>['warn','due'].includes(fltStatus(c)));
+  if(exportFilter==='unpaid')return customers.filter(c=>remAmt(c)>0);
+  return customers;
+}
+function setExpFilter(f){exportFilter=f;renderExport();}
+function toggleCol(key){selectedCols.has(key)?selectedCols.delete(key):selectedCols.add(key);renderExport();}
+
+function renderExport(){
+  const rows=getExportRows();
+  const cols=ALL_COLS.filter(c=>selectedCols.has(c.key));
+  const preview=rows.slice(0,3);
+  document.getElementById('view-export').innerHTML=`
+    <div style="padding-top:8px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px">Hangi müşteriler?</div>
+      <div class="ftags">
+        <span class="ftag ${exportFilter==='all'?'on':''}" onclick="setExpFilter('all')">Tümü (${customers.length})</span>
+        <span class="ftag ${exportFilter==='due'?'on':''}" onclick="setExpFilter('due')">Filtre geçti (${customers.filter(c=>fltStatus(c)==='due').length})</span>
+        <span class="ftag ${exportFilter==='warn'?'on':''}" onclick="setExpFilter('warn')">Filtre yakın (${customers.filter(c=>['warn','due'].includes(fltStatus(c))).length})</span>
+        <span class="ftag ${exportFilter==='unpaid'?'on':''}" onclick="setExpFilter('unpaid')">Ödeme bekliyor (${customers.filter(c=>remAmt(c)>0).length})</span>
+      </div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px">Sütunlar:</div>
+      <div class="col-grid">${ALL_COLS.map(col=>`
+        <label class="col-item">
+          <input type="checkbox" ${selectedCols.has(col.key)?'checked':''} onchange="toggleCol('${col.key}')">
+          ${col.label}
+        </label>`).join('')}</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:6px">Önizleme (${rows.length} kayıt):</div>
+      <div class="preview-wrap">
+        <table class="preview-table">
+          <thead><tr>${cols.map(c=>`<th>${c.label}</th>`).join('')}</tr></thead>
+          <tbody>${preview.map(r=>`<tr>${cols.map(c=>`<td>${getCellVal(r,c.key)}</td>`).join('')}</tr>`).join('')}</tbody>
+        </table>
+      </div>
+      <div class="export-btns">
+        <button class="btn-xlsx" onclick="doXLSX()">Excel (.xlsx)</button>
+        <button class="btn-csv" onclick="doCSV()">CSV indir</button>
+      </div>
+    </div>`;
+}
+
+function doXLSX(){
+  const rows=getExportRows();
+  const cols=ALL_COLS.filter(c=>selectedCols.has(c.key));
+  const header=cols.map(c=>c.label);
+  const data=rows.map(r=>cols.map(c=>getCellVal(r,c.key)));
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet([header,...data]);
+  ws['!cols']=cols.map((c,ci)=>{const vals=[header[ci],...data.map(r=>String(r[ci]||''))];return{wch:Math.min(35,Math.max(...vals.map(v=>v.length))+2)};});
+  XLSX.utils.book_append_sheet(wb,ws,'Müşteriler');
+  const sd=[];rows.forEach(c=>(c.servis||[]).forEach(s=>sd.push([c.name,c.phone,fmtD(s.date),s.desc,s.fee])));
+  if(sd.length){const ws2=XLSX.utils.aoa_to_sheet([['Müşteri','Telefon','Tarih','İşlem','Ücret (₺)'],...sd]);XLSX.utils.book_append_sheet(wb,ws2,'Servis Geçmişi');}
+  const td=[];rows.filter(c=>c.paytype==='Taksitli').forEach(c=>{(c.taksitPaid||[]).forEach((ok,i)=>td.push([c.name,c.personelAdi||'-',i+1,fmtM(taksitPer(c)),ok?'Ödendi':'Bekliyor']));});
+  if(td.length){const ws3=XLSX.utils.aoa_to_sheet([['Müşteri','Personel','Taksit No','Tutar','Durum'],...td]);XLSX.utils.book_append_sheet(wb,ws3,'Taksit Detayı');}
+  XLSX.writeFile(wb,'musteri_listesi.xlsx');
+}
+function doCSV(){
+  const rows=getExportRows();const cols=ALL_COLS.filter(c=>selectedCols.has(c.key));
+  const csv=[cols.map(c=>c.label),...rows.map(r=>cols.map(c=>getCellVal(r,c.key)))].map(r=>r.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='musteri_listesi.csv';a.click();
+}
+
+// ---- PWA Install ----
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();deferredPrompt=e;
+  document.getElementById('install-banner').classList.remove('hidden');
+});
+function installApp(){
+  if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>{deferredPrompt=null;document.getElementById('install-banner').classList.add('hidden');});}
+}
+window.addEventListener('appinstalled',()=>{document.getElementById('install-banner').classList.add('hidden');});
+
+// ---- Service Worker ----
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+
+render();
+</script>
+</body>
+</html>
